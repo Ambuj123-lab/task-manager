@@ -9,8 +9,21 @@
 
 ---
 
-A lightweight **To-Do app** built with pure **HTML, CSS, and JavaScript** — now upgraded to a **Progressive Web App (PWA)**.  
+A lightweight **To-Do app** — now upgraded to a **Progressive Web App (PWA)**.  
 You can install it on desktop & mobile, and it works **offline** with cached tasks.
+
+## 🚀 Tech Stack
+- **Frontend Framework**: React.js (with JSX)
+- **Language**: JavaScript (ES6+)
+- **Styling**: CSS3
+- **Web APIs**: 
+  - Web Speech API (voice features)
+  - Web Audio API (sounds/alerts)
+- **Storage**: Local Storage (persistent tasks in browser)
+- **Build Tools**: Babel (JSX → JavaScript transpilation)
+- **PWA**: Service Worker + Manifest (offline support, installable)
+- **Hosting**: Netlify
+
 
 🔗 **Live Demo** → [ambuj-to-do-tool.netlify.app](https://ambuj-to-do-tool.netlify.app/)
 
