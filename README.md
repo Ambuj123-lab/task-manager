@@ -1,6 +1,9 @@
 # ✅ Ambuj To-Do Tool (PWA)
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/your-netlify-badge/deploy-status)](https://ambuj-to-do-tool.netlify.app)
+![React.js](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Babel](https://img.shields.io/badge/Babel-F9DC3E?style=for-the-badge&logo=babel&logoColor=black)
 ![Made with HTML](https://img.shields.io/badge/Made%20with-HTML-orange?style=flat-square)
 ![Made with CSS](https://img.shields.io/badge/Made%20with-CSS-blue?style=flat-square)
 ![Made with JS](https://img.shields.io/badge/Made%20with-JavaScript-yellow?style=flat-square)
