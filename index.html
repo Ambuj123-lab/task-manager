@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Ambuj Kumar Tripathi</title>
+    
+    <!-- React and ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'neon-green': '#00ff88',
+                        'dark-bg': '#0a0a0a',
+                        'dark-card': '#1a1a1a',
+                        'dark-border': '#333333',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-inter">
+    <div id="root">
+        <!-- Loading fallback -->
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #0a0a0a; color: white;">
+            <div>Loading Task Manager...</div>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Icon Component
+        const Icon = ({ name, className = "w-5 h-5", ...props }) => {
+            const icons = {
+                plus: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+                trash: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+                edit: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
+                calendar: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+                sun: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+                moon: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>,
+                chart: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+                clock: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+                check: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+                alert: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+                download: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>,
+                upload: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>,
+                search: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+                x: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+                bell: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>,
+                flag: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2h7a2 2 0 012 2v6a2 2 0 01-2 2h-7l-1-2H5a2 2 0 00-2 2z" /></svg>,
+                user: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
+                database: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>,
+                external: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>,
+                zap: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"></polygon></svg>,
+                archive: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+            };
+            return icons[name] || <span className={className}>?</span>;
+        };
+
+        const TaskManager = () => {
+            const [tasks, setTasks] = useState([]);
+            const [newTask, setNewTask] = useState('');
+            const [newDueDate, setNewDueDate] = useState('');
+            const [newNotes, setNewNotes] = useState('');
+            const [filter, setFilter] = useState('all');
+            const [category, setCategory] = useState('work');
+            const [priority, setPriority] = useState('medium');
+            const [darkMode, setDarkMode] = useState(true);
+            const [editingTask, setEditingTask] = useState(null);
+            const [showStats, setShowStats] = useState(false);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [showExportModal, setShowExportModal] = useState(false);
+            const [showImportModal, setShowImportModal] = useState(false);
+            const [selectedTasks, setSelectedTasks] = useState([]);
+            const [toast, setToast] = useState(null);
+            const fileInputRef = useRef(null);
+            
+            // Time tracking states - only session tracking
+            const [sessionStart, setSessionStart] = useState(Date.now());
+            const [currentTime, setCurrentTime] = useState(Date.now());
+            const [isActive, setIsActive] = useState(true);
+            const [audioEnabled, setAudioEnabled] = useState(true);
+
+            // Audio functions
+            const speakWelcomeMessage = () => {
+                if (!audioEnabled) return;
+                
+                try {
+                    const utterance = new SpeechSynthesisUtterance(
+                        "Welcome to Ambuj Kumar Tripathi's Professional Task Manager"
+                    );
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.1;
+                    utterance.volume = 0.7;
+                    speechSynthesis.speak(utterance);
+                    showToast('Welcome message played!');
+                } catch (error) {
+                    showToast('Audio not supported in this browser', 'error');
+                }
+            };
+
+            const playTaskSound = (type = 'create') => {
+                if (!audioEnabled) return;
+                
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Different sounds for different actions
+                    switch (type) {
+                        case 'create':
+                            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                            oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
+                            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                            oscillator.start();
+                            oscillator.stop(audioContext.currentTime + 0.15);
+                            break;
+                        case 'complete':
+                            oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                            oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1);
+                            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                            oscillator.start();
+                            oscillator.stop(audioContext.currentTime + 0.2);
+                            break;
+                        case 'delete':
+                            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                            oscillator.start();
+                            oscillator.stop(audioContext.currentTime + 0.1);
+                            break;
+                    }
+                } catch (error) {
+                    console.warn('Audio playback failed:', error);
+                }
+            };
+
+            // Toast notification
+            const showToast = (message, type = 'success') => {
+                setToast({ message, type });
+                setTimeout(() => setToast(null), 3000);
+            };
+
+            // Time tracking functions
+            const formatTime = (milliseconds) => {
+                const seconds = Math.floor(milliseconds / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                
+                if (hours > 0) {
+                    return `${hours}h ${minutes % 60}m`;
+                }
+                return `${minutes}m ${seconds % 60}s`;
+            };
+
+            const getTodayKey = () => {
+                return `timeTracking-${new Date().toDateString()}`;
+            };
+
+            // Custom ID Generator for AMBUJ
+            const generateAmbujId = () => {
+                try {
+                    const currentCounter = parseInt(localStorage.getItem('ambujTaskCounter') || '0');
+                    const newCounter = currentCounter + 1;
+                    localStorage.setItem('ambujTaskCounter', newCounter.toString());
+                    return `AMBUJ${newCounter.toString().padStart(3, '0')}`;
+                } catch (error) {
+                    // Fallback if localStorage fails
+                    return `AMBUJ${Math.floor(Math.random() * 999).toString().padStart(3, '0')}`;
+                }
+            };
+
+            // Storage functions with better error handling
+            const saveToStorage = (key, data) => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    return true;
+                } catch (error) {
+                    console.warn('Storage not available:', error);
+                    return false;
+                }
+            };
+
+            const loadFromStorage = (key) => {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : null;
+                } catch (error) {
+                    console.warn('Could not load from storage:', error);
+                    return null;
+                }
+            };
+
+            // Initialize time tracking - session only
+            useEffect(() => {
+                // Real-time clock update
+                const interval = setInterval(() => {
+                    setCurrentTime(Date.now());
+                }, 1000);
+
+                // Activity detection
+                const handleActivity = () => setIsActive(true);
+                const handleInactivity = () => setIsActive(false);
+                
+                document.addEventListener('mousemove', handleActivity);
+                document.addEventListener('keypress', handleActivity);
+                document.addEventListener('visibilitychange', () => {
+                    setIsActive(!document.hidden);
+                });
+
+                return () => {
+                    clearInterval(interval);
+                    document.removeEventListener('mousemove', handleActivity);
+                    document.removeEventListener('keypress', handleActivity);
+                };
+            }, []);
+
+            // Initialize data
+            useEffect(() => {
+                const savedTasks = loadFromStorage('ambujTaskManager');
+                const savedTheme = loadFromStorage('ambujTheme');
+                
+                if (savedTasks && Array.isArray(savedTasks)) {
+                    setTasks(savedTasks);
+                } else {
+                    // Create welcome task with AMBUJ ID
+                    const welcomeTask = {
+                        id: 'AMBUJ001',
+                        text: 'Welcome to your Professional Task Manager!',
+                        notes: 'Edit or delete this task to get started. Use priority system and categories to organize efficiently.',
+                        status: 'TODO',
+                        category: 'personal',
+                        priority: 'high',
+                        createdAt: new Date().toISOString(),
+                        dueDate: null,
+                        completedAt: null
+                    };
+                    setTasks([welcomeTask]);
+                    // Set counter to 1 since welcome task uses AMBUJ001
+                    try {
+                        localStorage.setItem('ambujTaskCounter', '1');
+                    } catch (error) {
+                        console.warn('Could not set counter');
+                    }
+                }
+                
+                if (savedTheme) {
+                    setDarkMode(savedTheme === 'dark');
+                }
+            }, []);
+
+            // Save tasks when they change
+            useEffect(() => {
+                if (tasks.length > 0) {
+                    saveToStorage('ambujTaskManager', tasks);
+                }
+            }, [tasks]);
+
+            // Save theme when it changes
+            useEffect(() => {
+                saveToStorage('ambujTheme', darkMode ? 'dark' : 'light');
+                document.documentElement.classList.toggle('dark', darkMode);
+            }, [darkMode]);
+
+            const addTask = () => {
+                if (newTask.trim()) {
+                    const taskId = generateAmbujId();
+                    const task = {
+                        id: taskId,
+                        text: newTask.trim(),
+                        notes: newNotes.trim(),
+                        status: 'TODO',
+                        category,
+                        priority,
+                        createdAt: new Date().toISOString(),
+                        dueDate: newDueDate || null,
+                        completedAt: null
+                    };
+                    setTasks(prev => [task, ...prev]);
+                    setNewTask('');
+                    setNewNotes('');
+                    setNewDueDate('');
+                    playTaskSound('create'); // Play creation sound
+                    showToast(`Task ${taskId} created successfully!`);
+                }
+            };
+
+            const updateTaskStatus = (id, newStatus) => {
+                setTasks(prev => prev.map(task => 
+                    task.id === id ? {
+                        ...task,
+                        status: newStatus,
+                        completedAt: newStatus === 'COMPLETED' ? new Date().toISOString() : null
+                    } : task
+                ));
+                
+                if (newStatus === 'COMPLETED') {
+                    playTaskSound('complete');
+                }
+                showToast(`Task ${newStatus.toLowerCase()}!`);
+            };
+
+            const deleteTask = (id) => {
+                setTasks(prev => prev.filter(task => task.id !== id));
+                playTaskSound('delete'); // Play deletion sound
+                showToast('Task deleted successfully!');
+            };
+
+            const updateTask = (id, updates) => {
+                setTasks(prev => prev.map(task => 
+                    task.id === id ? { ...task, ...updates } : task
+                ));
+                setEditingTask(null);
+                showToast('Task updated successfully!');
+            };
+
+            const exportData = () => {
+                try {
+                    const dataStr = JSON.stringify(tasks, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `ambuj-tasks-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    setShowExportModal(false);
+                    showToast('Data exported successfully!');
+                } catch (error) {
+                    showToast('Export failed!', 'error');
+                }
+            };
+
+            const importData = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const importedTasks = JSON.parse(e.target.result);
+                            if (Array.isArray(importedTasks)) {
+                                setTasks(importedTasks);
+                                setShowImportModal(false);
+                                showToast(`${importedTasks.length} tasks imported!`);
+                            } else {
+                                showToast('Invalid file format!', 'error');
+                            }
+                        } catch {
+                            showToast('Error reading file!', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+                event.target.value = '';
+            };
+
+            // Filter tasks with improved search logic
+            const filteredTasks = tasks.filter(task => {
+                if (!task) return false; // Safety check
+                
+                // Enhanced search logic - search in multiple fields
+                const searchLower = searchTerm.toLowerCase().trim();
+                let matchesSearch = true;
+                
+                if (searchTerm.trim() !== '') {
+                    const taskText = (task.text || '').toLowerCase();
+                    const taskNotes = (task.notes || '').toLowerCase();
+                    const taskId = (task.id || '').toString().toLowerCase();
+                    const taskCategory = (task.category || '').toLowerCase();
+                    const taskPriority = (task.priority || '').toLowerCase();
+                    const taskStatus = (task.status || '').toLowerCase();
+                    
+                    matchesSearch = 
+                        taskText.includes(searchLower) ||
+                        taskNotes.includes(searchLower) ||
+                        taskId.includes(searchLower) ||
+                        taskCategory.includes(searchLower) ||
+                        taskPriority.includes(searchLower) ||
+                        taskStatus.includes(searchLower);
+                }
+                
+                if (!matchesSearch) return false;
+                
+                // Apply filters
+                if (filter === 'todo') return task.status === 'TODO';
+                if (filter === 'wip') return task.status === 'WIP';
+                if (filter === 'completed') return task.status === 'COMPLETED';
+                if (filter === 'work') return task.category === 'work';
+                if (filter === 'personal') return task.category === 'personal';
+                if (filter === 'high') return task.priority === 'high';
+                return true;
+            });
+
+            const getPriorityColor = (priority) => {
+                switch (priority) {
+                    case 'high': return 'text-red-400 bg-red-400/20';
+                    case 'medium': return 'text-yellow-400 bg-yellow-400/20';
+                    case 'low': return 'text-green-400 bg-green-400/20';
+                    default: return 'text-gray-400 bg-gray-400/20';
+                }
+            };
+
+            const getStatusIcon = (status) => {
+                switch (status) {
+                    case 'TODO': return <Icon name="alert" className="w-5 h-5 text-red-400" />;
+                    case 'WIP': return <Icon name="clock" className="w-5 h-5 text-yellow-400" />;
+                    case 'COMPLETED': return <Icon name="check" className="w-5 h-5 text-green-400" />;
+                    default: return null;
+                }
+            };
+
+            const stats = {
+                total: tasks.length,
+                todo: tasks.filter(t => t.status === 'TODO').length,
+                wip: tasks.filter(t => t.status === 'WIP').length,
+                completed: tasks.filter(t => t.status === 'COMPLETED').length,
+            };
+
+            return (
+                <div className={`min-h-screen transition-all duration-500 ${
+                    darkMode ? 'dark bg-dark-bg text-white' : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900'
+                }`}>
+                    
+                    {/* Toast */}
+                    {toast && (
+                        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transition-all duration-300 ${
+                            toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-neon-green text-black'
+                        }`}>
+                            <div className="flex items-center gap-2">
+                                <Icon name={toast.type === 'error' ? 'alert' : 'check'} className="w-5 h-5" />
+                                <span className="font-medium">{toast.message}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="container mx-auto px-4 py-6 lg:py-8 max-w-7xl">
+                        
+                        {/* Header */}
+                        <div className="mb-8">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                                <div>
+                                    <h1 className="text-3xl lg:text-5xl font-black bg-gradient-to-r from-neon-green to-blue-400 bg-clip-text text-transparent mb-2">
+                                        TASK MANAGER
+                                    </h1>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                        <div className="flex items-center gap-2">
+                                            <Icon name="user" className="w-4 h-4" />
+                                            <span className="font-medium">Ambuj Kumar Tripathi</span>
+                                        </div>
+                                        <span className="hidden sm:block">•</span>
+                                        <span>Professional Task Management System</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-white/5 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/10">
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="clock" className="w-4 h-4 text-gray-400" />
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs text-gray-400">Session Time</span>
+                                                    <span className="font-mono text-neon-green font-bold">{formatTime(currentTime - sessionStart)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button
+                                        onClick={speakWelcomeMessage}
+                                        className="p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300"
+                                        title="Play Welcome Message"
+                                    >
+                                        <Icon name="bell" className="w-5 h-5" />
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => setAudioEnabled(!audioEnabled)}
+                                        className={`p-3 rounded-xl transition-all duration-300 ${
+                                            audioEnabled 
+                                                ? 'bg-neon-green text-black shadow-lg shadow-neon-green/25' 
+                                                : 'bg-white/10 backdrop-blur-sm hover:bg-white/20'
+                                        }`}
+                                        title={audioEnabled ? 'Disable Audio' : 'Enable Audio'}
+                                    >
+                                        {audioEnabled ? '🔊' : '🔇'}
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => setShowStats(!showStats)}
+                                        className={`p-3 rounded-xl transition-all duration-300 ${
+                                            showStats 
+                                                ? 'bg-neon-green text-black shadow-lg shadow-neon-green/25' 
+                                                : 'bg-white/10 backdrop-blur-sm hover:bg-white/20'
+                                        }`}
+                                        title="Toggle Dashboard"
+                                    >
+                                        <Icon name="chart" className="w-5 h-5" />
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => setDarkMode(!darkMode)}
+                                        className="p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300"
+                                        title="Toggle Theme"
+                                    >
+                                        <Icon name={darkMode ? 'sun' : 'moon'} className="w-5 h-5" />
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => setShowExportModal(true)}
+                                        className="p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300"
+                                        title="Export Data"
+                                    >
+                                        <Icon name="download" className="w-5 h-5" />
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => setShowImportModal(true)}
+                                        className="p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300"
+                                        title="Import Data"
+                                    >
+                                        <Icon name="upload" className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Analytics Tool Link */}
+                            <div className="bg-gradient-to-r from-neon-green/10 to-blue-400/10 backdrop-blur-sm rounded-2xl p-4 border border-neon-green/20">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg flex items-center gap-2">
+                                            <Icon name="zap" className="w-5 h-5 text-neon-green" />
+                                            Analytics Tool
+                                        </h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Convert Excel/CSV files to interactive charts</p>
+                                    </div>
+                                    <a 
+                                        href="https://ambuj-analytics.netlify.app/" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="bg-neon-green text-black px-4 py-2 rounded-xl font-medium hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                                    >
+                                        <span>View Tool</span>
+                                        <Icon name="external" className="w-4 h-4" />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Dashboard Stats */}
+                        {showStats && (
+                            <div className="mb-8 p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                    <Icon name="chart" className="w-6 h-6 text-neon-green" />
+                                    Dashboard Overview
+                                </h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {[
+                                        { label: 'Total Tasks', value: stats.total, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+                                        { label: 'To Do', value: stats.todo, color: 'text-red-400', bg: 'bg-red-400/10' },
+                                        { label: 'In Progress', value: stats.wip, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+                                        { label: 'Completed', value: stats.completed, color: 'text-green-400', bg: 'bg-green-400/10' }
+                                    ].map((stat, index) => (
+                                        <div key={index} className={`p-4 rounded-xl ${stat.bg} border border-white/5`}>
+                                            <div className={`text-2xl font-black ${stat.color}`}>{stat.value}</div>
+                                            <div className="text-sm text-gray-400 font-medium">{stat.label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Search & Filters */}
+                        <div className="mb-8 space-y-4">
+                            {/* Search Bar */}
+                            <div className="relative">
+                                <Icon name="search" className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        console.log('Search term changed:', e.target.value); // Debug log
+                                        setSearchTerm(e.target.value);
+                                    }}
+                                    placeholder="Search by keyword, ID (AMBUJ001), category, notes..."
+                                    className="w-full pl-12 pr-4 py-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl 
+                                             text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                             focus:border-neon-green/50 transition-all duration-300"
+                                />
+                                {searchTerm && (
+                                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                                        <span className="text-xs text-gray-400 bg-gray-500/20 px-2 py-1 rounded">
+                                            {filteredTasks.length} found
+                                        </span>
+                                        <button
+                                            onClick={() => setSearchTerm('')}
+                                            className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-all duration-300"
+                                            title="Clear search"
+                                        >
+                                            <Icon name="x" className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Filter Buttons */}
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    { key: 'all', label: 'All Tasks', count: stats.total },
+                                    { key: 'todo', label: 'To Do', count: stats.todo },
+                                    { key: 'wip', label: 'In Progress', count: stats.wip },
+                                    { key: 'completed', label: 'Completed', count: stats.completed },
+                                    { key: 'work', label: 'Work', count: tasks.filter(t => t.category === 'work').length },
+                                    { key: 'personal', label: 'Personal', count: tasks.filter(t => t.category === 'personal').length },
+                                    { key: 'high', label: 'High Priority', count: tasks.filter(t => t.priority === 'high').length }
+                                ].map(({ key, label, count }) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => setFilter(key)}
+                                        className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                                            filter === key
+                                                ? 'bg-neon-green text-black shadow-lg shadow-neon-green/25'
+                                                : 'bg-white/5 backdrop-blur-sm hover:bg-white/10 border border-white/10'
+                                        }`}
+                                    >
+                                        {label} ({count})
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Add Task Form */}
+                        <div className="mb-8 p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <Icon name="plus" className="w-5 h-5 text-neon-green" />
+                                Add New Task
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                                <div className="lg:col-span-2">
+                                    <input
+                                        type="text"
+                                        value={newTask}
+                                        onChange={(e) => setNewTask(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && addTask()}
+                                        placeholder="What needs to be done?"
+                                        className="w-full p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                                 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                                 focus:border-neon-green/50 transition-all duration-300"
+                                    />
+                                </div>
+                                <button
+                                    onClick={addTask}
+                                    disabled={!newTask.trim()}
+                                    className="bg-gradient-to-r from-neon-green to-green-400 text-black p-4 rounded-xl font-bold 
+                                             hover:from-green-400 hover:to-neon-green transition-all duration-300 
+                                             disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2
+                                             shadow-lg shadow-neon-green/25 hover:shadow-neon-green/40 hover:scale-105"
+                                >
+                                    <Icon name="plus" className="w-5 h-5" />
+                                    Add Task
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <textarea
+                                    value={newNotes}
+                                    onChange={(e) => setNewNotes(e.target.value)}
+                                    placeholder="Additional notes (optional)"
+                                    rows="2"
+                                    className="w-full p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                             text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                             focus:border-neon-green/50 transition-all duration-300 resize-none"
+                                />
+                                
+                                <select
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    className="p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                             text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                             focus:border-neon-green/50 transition-all duration-300"
+                                >
+                                    <option value="work" className="bg-dark-card">Office Work</option>
+                                    <option value="personal" className="bg-dark-card">Personal</option>
+                                    <option value="other" className="bg-dark-card">Other</option>
+                                </select>
+
+                                <select
+                                    value={priority}
+                                    onChange={(e) => setPriority(e.target.value)}
+                                    className="p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                             text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                             focus:border-neon-green/50 transition-all duration-300"
+                                >
+                                    <option value="high" className="bg-dark-card">High Priority</option>
+                                    <option value="medium" className="bg-dark-card">Medium Priority</option>
+                                    <option value="low" className="bg-dark-card">Low Priority</option>
+                                </select>
+
+                                <input
+                                    type="date"
+                                    value={newDueDate}
+                                    onChange={(e) => setNewDueDate(e.target.value)}
+                                    className="p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                             text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                             focus:border-neon-green/50 transition-all duration-300"
+                                    title="Set due date (optional)"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Tasks List */}
+                        <div className="space-y-4">
+                            {filteredTasks.length === 0 ? (
+                                <div className="text-center py-16 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+                                    <div className="text-8xl mb-6 opacity-50">📝</div>
+                                    <h3 className="text-2xl font-bold mb-2">
+                                        {tasks.length === 0 ? 'Ready to Get Started?' : 'No Matching Tasks'}
+                                    </h3>
+                                    <p className="text-gray-400 max-w-md mx-auto">
+                                        {tasks.length === 0 
+                                            ? 'Create your first task to begin organizing your work and life efficiently!' 
+                                            : 'Try adjusting your search or filter criteria to find what you\'re looking for.'
+                                        }
+                                    </p>
+                                </div>
+                            ) : (
+                                filteredTasks.map(task => (
+                                    <div
+                                        key={task.id}
+                                        className="group bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 
+                                                 hover:bg-white/10 hover:border-neon-green/30 transition-all duration-300 
+                                                 hover:shadow-2xl hover:shadow-neon-green/10 hover:scale-[1.02] p-6"
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            {/* Status Icon */}
+                                            <div className="flex-shrink-0 mt-1">
+                                                {getStatusIcon(task.status)}
+                                            </div>
+                                            
+                                            {/* Task Content */}
+                                            <div className="flex-1">
+                                                <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                    <h3 className="text-lg font-bold text-white group-hover:text-neon-green transition-colors">
+                                                        {task.text}
+                                                    </h3>
+                                                    
+                                                    <span className="px-2 py-1 rounded-lg text-xs font-mono bg-gray-500/20 text-gray-300">
+                                                        ID: {task.id}
+                                                    </span>
+                                                    
+                                                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                                                        task.status === 'TODO' ? 'bg-red-500/20 text-red-400' :
+                                                        task.status === 'WIP' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                        'bg-green-500/20 text-green-400'
+                                                    }`}>
+                                                        {task.status}
+                                                    </span>
+                                                    
+                                                    <span className="px-2 py-1 rounded-lg text-xs bg-blue-500/20 text-blue-400 font-medium capitalize">
+                                                        {task.category}
+                                                    </span>
+                                                    
+                                                    <span className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 ${getPriorityColor(task.priority)}`}>
+                                                        <Icon name="flag" className="w-3 h-3" />
+                                                        {task.priority.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                
+                                                {task.notes && (
+                                                    <p className="text-sm text-gray-300 mb-3 leading-relaxed">
+                                                        {task.notes}
+                                                    </p>
+                                                )}
+                                                
+                                                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
+                                                    <span className="flex items-center gap-1">
+                                                        <Icon name="calendar" className="w-3 h-3" />
+                                                        Created: {new Date(task.createdAt).toLocaleDateString()}
+                                                    </span>
+                                                    
+                                                    {task.dueDate && (
+                                                        <span className={`flex items-center gap-1 ${
+                                                            new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
+                                                                ? 'text-red-400 font-medium' : 'text-gray-400'
+                                                        }`}>
+                                                            <Icon name="bell" className="w-3 h-3" />
+                                                            Due: {new Date(task.dueDate).toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                    
+                                                    {task.completedAt && (
+                                                        <span className="flex items-center gap-1 text-green-400">
+                                                            <Icon name="check" className="w-3 h-3" />
+                                                            Completed: {new Date(task.completedAt).toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Action Buttons */}
+                                            <div className="flex items-center gap-2">
+                                                <select
+                                                    value={task.status}
+                                                    onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                                                    className="p-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg 
+                                                             text-white text-sm focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                                             hover:bg-white/10 transition-all duration-300"
+                                                >
+                                                    <option value="TODO" className="bg-dark-card">To Do</option>
+                                                    <option value="WIP" className="bg-dark-card">In Progress</option>
+                                                    <option value="COMPLETED" className="bg-dark-card">Completed</option>
+                                                </select>
+                                                
+                                                <button
+                                                    onClick={() => setEditingTask(task)}
+                                                    className="p-2 text-blue-400 hover:bg-blue-400/20 rounded-lg transition-all duration-300"
+                                                    title="Edit task"
+                                                >
+                                                    <Icon name="edit" className="w-4 h-4" />
+                                                </button>
+                                                
+                                                <button
+                                                    onClick={() => deleteTask(task.id)}
+                                                    className="p-2 text-red-400 hover:bg-red-400/20 rounded-lg transition-all duration-300"
+                                                    title="Delete task"
+                                                >
+                                                    <Icon name="trash" className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Edit Modal */}
+                        {editingTask && (
+                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                                <div className="bg-dark-card border border-white/20 rounded-2xl p-6 w-full max-w-2xl shadow-2xl">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <Icon name="edit" className="w-5 h-5 text-neon-green" />
+                                            Edit Task
+                                        </h3>
+                                        <button
+                                            onClick={() => setEditingTask(null)}
+                                            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
+                                        >
+                                            <Icon name="x" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <input
+                                            type="text"
+                                            value={editingTask.text}
+                                            onChange={(e) => setEditingTask({...editingTask, text: e.target.value})}
+                                            className="w-full p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                                     text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                                     focus:border-neon-green/50 transition-all duration-300"
+                                            placeholder="Task title"
+                                        />
+                                        
+                                        <textarea
+                                            value={editingTask.notes || ''}
+                                            onChange={(e) => setEditingTask({...editingTask, notes: e.target.value})}
+                                            className="w-full p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                                     text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                                     focus:border-neon-green/50 transition-all duration-300 resize-none"
+                                            placeholder="Additional notes"
+                                            rows="3"
+                                        />
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <input
+                                                type="date"
+                                                value={editingTask.dueDate || ''}
+                                                onChange={(e) => setEditingTask({...editingTask, dueDate: e.target.value})}
+                                                className="p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                                         text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                                         focus:border-neon-green/50 transition-all duration-300"
+                                            />
+                                            
+                                            <select
+                                                value={editingTask.category}
+                                                onChange={(e) => setEditingTask({...editingTask, category: e.target.value})}
+                                                className="p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                                         text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                                         focus:border-neon-green/50 transition-all duration-300"
+                                            >
+                                                <option value="work" className="bg-dark-card">Office Work</option>
+                                                <option value="personal" className="bg-dark-card">Personal</option>
+                                                <option value="other" className="bg-dark-card">Other</option>
+                                            </select>
+                                            
+                                            <select
+                                                value={editingTask.priority}
+                                                onChange={(e) => setEditingTask({...editingTask, priority: e.target.value})}
+                                                className="p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl 
+                                                         text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 
+                                                         focus:border-neon-green/50 transition-all duration-300"
+                                            >
+                                                <option value="high" className="bg-dark-card">High Priority</option>
+                                                <option value="medium" className="bg-dark-card">Medium Priority</option>
+                                                <option value="low" className="bg-dark-card">Low Priority</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div className="flex gap-3 pt-4">
+                                            <button
+                                                onClick={() => updateTask(editingTask.id, editingTask)}
+                                                className="flex-1 bg-gradient-to-r from-neon-green to-green-400 text-black p-4 rounded-xl 
+                                                         font-bold hover:from-green-400 hover:to-neon-green transition-all duration-300
+                                                         shadow-lg shadow-neon-green/25"
+                                            >
+                                                Save Changes
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingTask(null)}
+                                                className="flex-1 bg-white/5 backdrop-blur-sm text-white p-4 rounded-xl 
+                                                         hover:bg-white/10 transition-all duration-300 border border-white/10"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Export Modal */}
+                        {showExportModal && (
+                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                                <div className="bg-dark-card border border-white/20 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <Icon name="download" className="w-5 h-5 text-neon-green" />
+                                            Export Data
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowExportModal(false)}
+                                            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
+                                        >
+                                            <Icon name="x" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <p className="text-gray-300">
+                                            Export all your tasks as a JSON file for backup or transfer to another device.
+                                        </p>
+                                        
+                                        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                                            <div className="text-sm text-gray-400 space-y-1">
+                                                <div>Total Tasks: {tasks.length}</div>
+                                                <div>File Size: ~{Math.round(JSON.stringify(tasks).length / 1024)}KB</div>
+                                                <div>Format: JSON</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex gap-3 pt-4">
+                                            <button
+                                                onClick={exportData}
+                                                className="flex-1 bg-gradient-to-r from-neon-green to-green-400 text-black p-4 rounded-xl 
+                                                         font-bold hover:from-green-400 hover:to-neon-green transition-all duration-300
+                                                         shadow-lg shadow-neon-green/25 flex items-center justify-center gap-2"
+                                            >
+                                                <Icon name="download" className="w-4 h-4" />
+                                                Export Now
+                                            </button>
+                                            <button
+                                                onClick={() => setShowExportModal(false)}
+                                                className="px-6 bg-white/5 backdrop-blur-sm text-white p-4 rounded-xl 
+                                                         hover:bg-white/10 transition-all duration-300 border border-white/10"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Import Modal */}
+                        {showImportModal && (
+                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                                <div className="bg-dark-card border border-white/20 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <Icon name="upload" className="w-5 h-5 text-neon-green" />
+                                            Import Data
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowImportModal(false)}
+                                            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
+                                        >
+                                            <Icon name="x" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <p className="text-gray-300">
+                                            Import tasks from a previously exported JSON file. This will replace all current tasks.
+                                        </p>
+                                        
+                                        <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl">
+                                            <div className="flex items-center gap-2 text-yellow-400 text-sm font-medium mb-1">
+                                                <Icon name="alert" className="w-4 h-4" />
+                                                Warning
+                                            </div>
+                                            <p className="text-yellow-300 text-sm">
+                                                This action will overwrite all existing tasks. Make sure to export your current data first.
+                                            </p>
+                                        </div>
+                                        
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept=".json"
+                                            onChange={importData}
+                                            className="hidden"
+                                        />
+                                        
+                                        <div className="flex gap-3 pt-4">
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="flex-1 bg-gradient-to-r from-neon-green to-green-400 text-black p-4 rounded-xl 
+                                                         font-bold hover:from-green-400 hover:to-neon-green transition-all duration-300
+                                                         shadow-lg shadow-neon-green/25 flex items-center justify-center gap-2"
+                                            >
+                                                <Icon name="upload" className="w-4 h-4" />
+                                                Choose File
+                                            </button>
+                                            <button
+                                                onClick={() => setShowImportModal(false)}
+                                                className="px-6 bg-white/5 backdrop-blur-sm text-white p-4 rounded-xl 
+                                                         hover:bg-white/10 transition-all duration-300 border border-white/10"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Footer */}
+                        <div className="mt-12 text-center space-y-4">
+                            <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                                <h4 className="font-bold text-lg mb-2 flex items-center justify-center gap-2">
+                                    <Icon name="user" className="w-5 h-5 text-neon-green" />
+                                    Ambuj Kumar Tripathi
+                                </h4>
+                                <p className="text-gray-400 text-sm mb-4">
+                                    Professional Task Management System | Data stored locally in your browser
+                                </p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div className="bg-white/5 p-3 rounded-xl">
+                                        <div className="font-medium text-blue-400">Features</div>
+                                        <div className="text-gray-400">Local Storage, Export/Import</div>
+                                    </div>
+                                    <div className="bg-white/5 p-3 rounded-xl">
+                                        <div className="font-medium text-purple-400">Responsive</div>
+                                        <div className="text-gray-400">Works on all devices</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the app
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot ? ReactDOM.createRoot(container) : ReactDOM.render;
+        
+        if (ReactDOM.createRoot) {
+            root.render(<TaskManager />);
+        } else {
+            root(<TaskManager />, container);
+        }
+    </script>
+</body>
+</html>
