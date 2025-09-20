@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Manager - Ambuj Kumar Tripathi</title>
+    <link rel="manifest" href="/manifest.json">
     
     <!-- React and ReactDOM from CDN -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -34,6 +35,19 @@
             }
         }
     </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered! Scope:', registration.scope);
+                })
+                .catch(err => {
+                    console.log('Service Worker registration failed:', err);
+                });
+        });
+    }
+</script>
 </head>
 <body class="font-inter">
     <div id="root">
@@ -91,7 +105,23 @@
             const [selectedTasks, setSelectedTasks] = useState([]);
             const [toast, setToast] = useState(null);
             const fileInputRef = useRef(null);
-            
+            const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+            useEffect(() => {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    setDeferredPrompt(e);
+                });
+            }, []);
+
+            const handleInstallClick = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to the install prompt: ${outcome}`);
+                    setDeferredPrompt(null);
+                }
+            };
             // Time tracking states - only session tracking
             const [sessionStart, setSessionStart] = useState(Date.now());
             const [currentTime, setCurrentTime] = useState(Date.now());
@@ -530,6 +560,46 @@
                                     >
                                         <Icon name={darkMode ? 'sun' : 'moon'} className="w-5 h-5" />
                                     </button>
+                                 {deferredPrompt && (
+                                        <button
+                                            onClick={handleInstallClick}
+                                            className="relative group flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-black via-gray-900 to-black border border-neon-green/30 rounded-2xl font-bold text-white overflow-hidden transition-all duration-500 hover:border-neon-green hover:shadow-[0_0_30px_rgba(0,255,136,0.4)] hover:scale-105"
+                                            title="Install as Progressive Web App"
+                                        >
+                                            {/* Animated background glow */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neon-green/10 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                                            
+                                            {/* Pulsing dots animation */}
+                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-neon-green rounded-full animate-ping opacity-75"></div>
+                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-neon-green rounded-full"></div>
+                                            
+                                            {/* Icon with rotation effect */}
+                                            <div className="relative group-hover:rotate-180 transition-transform duration-700">
+                                                <Icon name="download" className="w-5 h-5 text-neon-green drop-shadow-[0_0_10px_rgba(0,255,136,0.7)]" />
+                                            </div>
+                                            
+                                            {/* Text with glow effect */}
+                                            <span className="relative text-sm font-black tracking-wider uppercase bg-gradient-to-r from-white via-neon-green to-white bg-clip-text text-transparent">
+                                                <span className="hidden sm:block">Install App</span>
+                                                <span className="sm:hidden">Install</span>
+                                            </span>
+                                            
+                                            {/* Corner accent lines with bright flowing colors */}
+                                            <div className="absolute top-1 left-1 w-6 h-6 border-t-4 border-l-4 border-neon-green animate-pulse rounded-tl-lg"></div>
+                                            <div className="absolute bottom-1 right-1 w-6 h-6 border-b-4 border-r-4 border-red-500 animate-pulse rounded-br-lg" style={{animationDelay: '0.3s'}}></div>
+                                            <div className="absolute top-1 right-1 w-4 h-4 border-t-3 border-r-3 border-purple-500 animate-pulse rounded-tr-lg" style={{animationDelay: '0.6s'}}></div>
+                                            <div className="absolute bottom-1 left-1 w-4 h-4 border-b-3 border-l-3 border-violet-500 animate-pulse rounded-bl-lg" style={{animationDelay: '0.9s'}}></div>
+                                            
+                                            {/* Flowing light effect around corners */}
+                                            <div className="absolute inset-0 rounded-2xl" style={{
+                                                background: 'conic-gradient(from 0deg, transparent, #00ff88, transparent, #ef4444, transparent, #a855f7, transparent, #8b5cf6, transparent)',
+                                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                                                maskComposite: 'xor',
+                                                padding: '2px',
+                                                animation: 'spin 4s linear infinite'
+                                            }}></div>
+                                        </button>
+                                    )}
                                     
                                     <button
                                         onClick={() => setShowExportModal(true)}
